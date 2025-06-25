@@ -107,45 +107,40 @@ stages:
   dependsOn: DeployToDev
   condition: succeeded()
   jobs:
-  - deployment: DeployToProd
+  - job: DeployToProd
     displayName: Helm Deploy to Prod AKS
-    environment: 
-      name: 'prod'                  
-      resourceType: 'Kubernetes'  
     pool:
       vmImage: 'ubuntu-latest'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: ManualValidation@0
-            displayName: 'Approve Prod Deployment'
-            inputs:
-              instructions: 'Please approve Prod deployment in the Environments UI.'
-              onTimeout: 'reject'
-              timeout: '2'
+    steps:
+      - task: ManualValidation@0
+        displayName: 'Approve Prod Deployment'
+        inputs:
+          instructions: 'Please approve Prod deployment in the Environments UI.'
+          onTimeout: 'reject'
+          timeout: '2'
 
-          - task: AzureCLI@2
-            displayName: Helm Upgrade or Install
-            inputs:
-              azureSubscription: "$(azureSubscription)"
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                echo "Setting Kubernetes context..."
+      - task: AzureCLI@2
+        displayName: Helm Upgrade or Install
+        inputs:
+          azureSubscription: "$(azureSubscription)"
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            echo "Setting Kubernetes context..."
 
-                export AKS_CLUSTER_NAME="$(aksCluster)"
-                export RESOURCE_GROUP="$(aksResourceGroup)"
-                echo "AKS Cluster: $AKS_CLUSTER_NAME"
-                echo "Resource Group: $RESOURCE_GROUP"
-                az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_CLUSTER_NAME" --overwrite-existing
-                kubectl get nodes
-                
+            export AKS_CLUSTER_NAME="$(aksCluster)"
+            export RESOURCE_GROUP="$(aksResourceGroup)"
+            echo "AKS Cluster: $AKS_CLUSTER_NAME"
+            echo "Resource Group: $RESOURCE_GROUP"
+            az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_CLUSTER_NAME" --overwrite-existing
+            kubectl get nodes
+            
 
-                echo "Deploying using Helm..."
-                helm upgrade --install weatherapp ./charts/myapp \
-                  --namespace prod \
-                  --create-namespace \
-                  --set image.tag=$(Build.BuildId)
+            echo "Deploying using Helm..."
+            helm upgrade --install weatherapp ./charts/myapp \
+              --namespace prod \
+              --create-namespace \
+              --set image.tag=$(Build.BuildId)
 
-                kubectl get svc -n prod
+            kubectl get svc -n prod
+          
