@@ -112,35 +112,37 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
-      - task: ManualValidation@0
-        displayName: 'Approve Prod Deployment'
-        inputs:
-          instructions: 'Please approve Prod deployment in the Environments UI.'
-          onTimeout: 'reject'
-          timeout: '2'
+    - task: ManualValidation@0
+      displayName: 'Approve Prod Deployment'
+      inputs:
+        instructions: 'Please approve Prod deployment'
+        onTimeout: 'reject'         # Reject if timeout is reached
+        timeout: '2'                # In hours (max is 72)
 
-      - task: AzureCLI@2
-        displayName: Helm Upgrade or Install
-        inputs:
-          azureSubscription: "$(azureSubscription)"
-          scriptType: 'bash'
-          scriptLocation: 'inlineScript'
-          inlineScript: |
-            echo "Setting Kubernetes context..."
+    - task: HelmInstaller@1
+      displayName: 'Install Helm'
+      inputs:
+        helmVersionToInstall: 'latest'
 
-            export AKS_CLUSTER_NAME="$(aksCluster)"
-            export RESOURCE_GROUP="$(aksResourceGroup)"
-            echo "AKS Cluster: $AKS_CLUSTER_NAME"
-            echo "Resource Group: $RESOURCE_GROUP"
-            az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_CLUSTER_NAME" --overwrite-existing
-            kubectl get nodes
-            
+    - task: AzureCLI@2
+      displayName: Helm Upgrade or Install
+      inputs:
+        azureSubscription: "$(azureSubscription)"
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Setting Kubernetes context..."
 
-            echo "Deploying using Helm..."
-            helm upgrade --install weatherapp ./charts/myapp \
-              --namespace prod \
-              --create-namespace \
-              --set image.tag=$(Build.BuildId)
+          export AKS_CLUSTER_NAME="$(aksCluster)"
+          export RESOURCE_GROUP="$(aksResourceGroup)"
+          echo "AKS Cluster: $AKS_CLUSTER_NAME"
+          echo "Resource Group: $RESOURCE_GROUP"
+          az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_CLUSTER_NAME" --overwrite-existing
+          kubectl get nodes
 
-            kubectl get svc -n prod
+          echo "Deploying using Helm..."
+          helm upgrade --install weatherapp ./charts/myapp \
+            --namespace prod \
+            --create-namespace \
+            --set image.tag=$(Build.BuildId)
           
