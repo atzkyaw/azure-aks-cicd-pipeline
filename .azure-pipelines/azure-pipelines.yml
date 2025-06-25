@@ -107,17 +107,17 @@ stages:
   dependsOn: DeployToDev
   condition: succeeded()
   jobs:
-  - job: DeployToProd
-    displayName: Helm Deploy to Prod AKS
+  - job: ApproveAndDeploy
+    displayName: Wait for Approval and Deploy to Prod
     pool:
       vmImage: 'ubuntu-latest'
     steps:
     - task: ManualValidation@0
-      displayName: 'Approve Prod Deployment'
+      displayName: 'Manual Approval - Deploy to Prod'
       inputs:
-        instructions: 'Please approve Prod deployment'
-        onTimeout: 'reject'         # Reject if timeout is reached
-        timeout: '2'                # In hours (max is 72)
+        instructions: 'Please approve the production deployment.'
+        onTimeout: 'reject'
+        timeout: '2'  # hours
 
     - task: HelmInstaller@1
       displayName: 'Install Helm'
@@ -125,7 +125,7 @@ stages:
         helmVersionToInstall: 'latest'
 
     - task: AzureCLI@2
-      displayName: Helm Upgrade or Install
+      displayName: 'Helm Upgrade or Install in Prod'
       inputs:
         azureSubscription: "$(azureSubscription)"
         scriptType: 'bash'
@@ -145,4 +145,3 @@ stages:
             --namespace prod \
             --create-namespace \
             --set image.tag=$(Build.BuildId)
-          
