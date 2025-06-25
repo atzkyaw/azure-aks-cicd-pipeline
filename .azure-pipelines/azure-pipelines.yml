@@ -22,9 +22,9 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "AKS Cluster: $(aksClusterName)"
-          echo "Resource Group: $(resourceGroup)"
-          az aks get-credentials --resource-group "$(resourceGroup)" --name "$(aksClusterName)" --overwrite-existing
-          kubectl config current-context
+          export AKS_CLUSTER_NAME="$(aksCluster)"
+          export RESOURCE_GROUP="$(aksResourceGroup)"
+          echo "AKS Cluster: $AKS_CLUSTER_NAME"
+          echo "Resource Group: $RESOURCE_GROUP"
 
 
