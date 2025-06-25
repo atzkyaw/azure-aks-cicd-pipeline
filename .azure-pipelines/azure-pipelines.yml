@@ -4,119 +4,42 @@ trigger:
       - main
 
 variables:
-  azureSubscription: 'Your-Service-Connection-Name'
-  acrName: 'youracrname'
-  aksCluster: 'your-aks-cluster-name'
-  aksResourceGroup: 'your-aks-resource-group'
-  imageRepository: 'myapp'
-  helmChartPath: 'charts/myapp'
-  environments:
-    - dev
-    - staging
-    - prod
+  - group: aks-variables
 
 stages:
 - stage: Build
+  displayName: Build and Push to ACR
   jobs:
   - job: Build
+    displayName: Build and Push Docker Image
     pool:
       vmImage: 'ubuntu-latest'
     steps:
     - task: DotNetCoreCLI@2
+      displayName: Restore
       inputs:
         command: 'restore'
         projects: '**/*.csproj'
+
     - task: DotNetCoreCLI@2
+      displayName: Build
       inputs:
         command: 'build'
         projects: '**/*.csproj'
+
     - task: DotNetCoreCLI@2
+      displayName: Publish
       inputs:
         command: 'publish'
         publishWebProjects: true
         arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
+
     - task: Docker@2
+      displayName: Docker Build and Push to ACR
       inputs:
         containerRegistry: '$(azureSubscription)'
-        repository: '$(imageRepository)'
+        repository: '$(acrName)/myapp'
         command: 'buildAndPush'
         Dockerfile: '**/Dockerfile'
         tags: |
           $(Build.BuildId)
-
-- stage: Deploy_Dev
-  dependsOn: Build
-  jobs:
-  - deployment: DeployDev
-    environment: 'dev'
-    pool:
-      vmImage: 'ubuntu-latest'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: HelmInstaller@1
-            inputs:
-              helmVersionToInstall: 'latest'
-          - task: AzureCLI@2
-            inputs:
-              azureSubscription: '$(azureSubscription)'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                az aks get-credentials --resource-group $(aksResourceGroup) --name $(aksCluster)
-                helm upgrade --install myapp-dev $(helmChartPath)                   --set image.repository=$(acrName).azurecr.io/$(imageRepository)                   --set image.tag=$(Build.BuildId)                   --namespace dev --create-namespace
-
-- stage: Deploy_Staging
-  dependsOn: Deploy_Dev
-  jobs:
-  - deployment: DeployStaging
-    environment: 'staging'
-    pool:
-      vmImage: 'ubuntu-latest'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: HelmInstaller@1
-            inputs:
-              helmVersionToInstall: 'latest'
-          - task: AzureCLI@2
-            inputs:
-              azureSubscription: '$(azureSubscription)'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                az aks get-credentials --resource-group $(aksResourceGroup) --name $(aksCluster)
-                helm upgrade --install myapp-staging $(helmChartPath)                   --set image.repository=$(acrName).azurecr.io/$(imageRepository)                   --set image.tag=$(Build.BuildId)                   --namespace staging --create-namespace
-
-- stage: Deploy_Prod
-  dependsOn: Deploy_Staging
-  condition: succeeded()
-  jobs:
-  - deployment: DeployProd
-    environment:
-      name: 'prod'
-      resourceType: 'VirtualMachine'
-    pool:
-      vmImage: 'ubuntu-latest'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: ManualValidation@0
-            inputs:
-              instructions: 'Approve production deployment'
-              onTimeout: 'reject'
-              timeout: '1'
-          - task: HelmInstaller@1
-            inputs:
-              helmVersionToInstall: 'latest'
-          - task: AzureCLI@2
-            inputs:
-              azureSubscription: '$(azureSubscription)'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                az aks get-credentials --resource-group $(aksResourceGroup) --name $(aksCluster)
-                helm upgrade --install myapp-prod $(helmChartPath)                   --set image.repository=$(acrName).azurecr.io/$(imageRepository)                   --set image.tag=$(Build.BuildId)                   --namespace prod --create-namespace
