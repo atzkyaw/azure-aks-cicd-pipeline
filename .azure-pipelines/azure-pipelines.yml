@@ -147,6 +147,7 @@ stages:
           az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_CLUSTER_NAME" --overwrite-existing
           kubectl get nodes
 
+
           echo "Deploying using Helm..."
           helm upgrade --install weatherapp ./charts/myapp \
             --namespace prod \
