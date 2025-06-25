@@ -61,7 +61,7 @@ stages:
       displayName: Docker Build and Push to ACR
       inputs:
         containerRegistry: 'ACR-ServiceConnection'  # <-- now uses the correct Docker Registry connection
-        repository: 'weatherapp'
+        repository: 'weatherappnet8'
         command: 'buildAndPush'
         Dockerfile: '**/Dockerfile'
         tags: |
