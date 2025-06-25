@@ -70,3 +70,4 @@ stages:
             --set image.repository=$(acrName)/myapp \
             --set image.tag=$(Build.BuildId)
 
+
