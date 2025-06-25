@@ -61,42 +61,11 @@ stages:
       displayName: Docker Build and Push to ACR
       inputs:
         containerRegistry: 'ACR-ServiceConnection'  # <-- now uses the correct Docker Registry connection
-        repository: '$(acrName)/myapp'
+        repository: 'myappv2'
         command: 'buildAndPush'
         Dockerfile: '**/Dockerfile'
         tags: |
           $(Build.BuildId)
           
-- stage: Deploy
-  displayName: Deploy to Dev using Helm
-  dependsOn: Build
-  condition: succeeded()
-  jobs:
-  - job: HelmDeploy
-    displayName: Helm Deploy to Dev AKS
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - task: AzureCLI@2
-      displayName: Helm Upgrade or Install
-      inputs:
-        azureSubscription: "$(azureSubscription)"
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          export AKS_CLUSTER_NAME="$(aksCluster)"
-          export RESOURCE_GROUP="$(aksResourceGroup)"
-          echo "AKS Cluster: $AKS_CLUSTER_NAME"
-          echo "Resource Group: $RESOURCE_GROUP"
-          az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_CLUSTER_NAME" --overwrite-existing
-          
-
-          echo "Deploying using Helm..."
-          helm upgrade --install myapp-dev ./charts/myapp \
-            --namespace dev \
-            --create-namespace \
-            --set image.repository=$(acrName)/myapp \
-            --set image.tag=$(Build.BuildId)
-
 
 
