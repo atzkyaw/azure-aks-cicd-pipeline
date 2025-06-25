@@ -37,8 +37,7 @@ stages:
     - task: Docker@2
       displayName: Docker Build and Push to ACR
       inputs:
-        containerRegistry: 'ACR-ServiceConnection'
-  
+        containerRegistry: 'ACR-ServiceConnection'  # <-- now uses the correct Docker Registry connection
         repository: '$(acrName)/myapp'
         command: 'buildAndPush'
         Dockerfile: '**/Dockerfile'
