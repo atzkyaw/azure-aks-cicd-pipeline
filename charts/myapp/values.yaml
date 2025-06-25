@@ -1,7 +1,16 @@
 image:
-  repository: youracrname.azurecr.io/myapp
-  tag: latest
+  repository: aksdemoregistry24403.azurecr.io/myapp
+  tag: latest   # or use a specific Build ID from ACR
+  pullPolicy: Always
 
 service:
-  type: ClusterIP
+  type: LoadBalancer
   port: 80
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
