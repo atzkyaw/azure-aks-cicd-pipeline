@@ -66,6 +66,32 @@ stages:
         Dockerfile: '**/Dockerfile'
         tags: |
           $(Build.BuildId)
+
+- stage: Deploy
+  displayName: Deploy to Dev using Helm
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: HelmDeploy
+    displayName: Helm Deploy to Dev AKS
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      displayName: Helm Upgrade or Install
+      inputs:
+        azureSubscription: "$(azureSubscription)"
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Setting Kubernetes context..."
+          az aks get-credentials --resource-group "$(aksResourceGroup)" --name "$(aksClusterName)" --overwrite-existing
+
+          echo "Deploying using Helm..."
+          helm upgrade --install weatherapp ./charts/myapp \
+            --namespace dev \
+            --create-namespace \
+            --set image.tag=$(Build.BuildId)
           
 
 

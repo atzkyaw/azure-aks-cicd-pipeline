@@ -1,11 +1,15 @@
 image:
-  repository: aksdemoregistry24403.azurecr.io/myapp
-  tag: latest   # or use a specific Build ID from ACR
+  repository: aksdemoregistry24403.azurecr.io/weatherappnet8
+  tag: 16   # or use a specific Build ID from ACR
   pullPolicy: Always
+  pullSecrets:
+    - acr-auth 
+
 
 service:
   type: LoadBalancer
-  port: 80
+  port: 80           # External port exposed by LoadBalancer
+  targetPort: 8080   # Internal container port
 
 resources: {}
 
@@ -14,3 +18,7 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+
+
+containerPort: 8080  # Optional custom field used in deployment.yaml
