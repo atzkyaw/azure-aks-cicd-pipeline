@@ -7,6 +7,29 @@ variables:
   - group: aks-variables
 
 stages:
+
+- stage: Testingconnection
+  displayName: Deploy to Dev using Helm
+  jobs:
+  - job: HelmDeploy
+    displayName: Helm Deploy to Dev AKS
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          export AKS_CLUSTER_NAME="$(aksCluster)"
+          export RESOURCE_GROUP="$(aksResourceGroup)"
+          echo "AKS Cluster: $AKS_CLUSTER_NAME"
+          echo "Resource Group: $RESOURCE_GROUP"
+          az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_CLUSTER_NAME" --overwrite-existing
+          kubectl get nodes
+          kubectl get pods --all-namespaces
+
 - stage: Build
   displayName: Build and Push to ACR
   jobs:
@@ -38,8 +61,11 @@ stages:
       displayName: Docker Build and Push to ACR
       inputs:
         containerRegistry: 'ACR-ServiceConnection'  # <-- now uses the correct Docker Registry connection
-        repository: '$(acrName)/myapp'
+        repository: 'myappv2'
         command: 'buildAndPush'
         Dockerfile: '**/Dockerfile'
         tags: |
           $(Build.BuildId)
+          
+
+
