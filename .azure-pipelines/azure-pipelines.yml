@@ -56,12 +56,12 @@ stages:
     - task: AzureCLI@2
       displayName: Helm Upgrade or Install
       inputs:
-        azureSubscription: $(azureSubscription)
+        azureSubscription: "$(azureSubscription)"
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
           echo "Setting Kubernetes context..."
-          az aks get-credentials --resource-group $(aksResourceGroup) --name $(aksClusterName) --overwrite-existing
+          az aks get-credentials --resource-group "$(aksResourceGroup)" --name "$(aksClusterName)" --overwrite-existing
 
           echo "Deploying using Helm..."
           helm upgrade --install myapp-dev ./charts/myapp \
