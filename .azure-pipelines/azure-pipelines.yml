@@ -85,7 +85,15 @@ stages:
         scriptLocation: 'inlineScript'
         inlineScript: |
           echo "Setting Kubernetes context..."
-          az aks get-credentials --resource-group "$(aksResourceGroup)" --name "$(aksClusterName)" --overwrite-existing
+          
+
+          export AKS_CLUSTER_NAME="$(aksCluster)"
+          export RESOURCE_GROUP="$(aksResourceGroup)"
+          echo "AKS Cluster: $AKS_CLUSTER_NAME"
+          echo "Resource Group: $RESOURCE_GROUP"
+          az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_CLUSTER_NAME" --overwrite-existing
+          kubectl get nodes
+          kubectl get pods --all-namespaces
 
           echo "Deploying using Helm..."
           helm upgrade --install weatherapp ./charts/myapp \
