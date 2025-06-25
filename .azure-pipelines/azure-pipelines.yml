@@ -102,6 +102,7 @@ stages:
             --set image.tag=$(Build.BuildId)
           kubectl get svc -n dev
 
+
 - stage: DeployToProd
   displayName: Deploy to Prod using Helm
   dependsOn: DeployToDev
